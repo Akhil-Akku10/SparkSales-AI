@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Forecasting Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            width: 420px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9f5ff;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #004085;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Sales Forecasting</h2>
+
+    <label>Year</label>
+    <input type="number" id="year" value="2024">
+
+    <label>Month</label>
+    <input type="number" id="month" value="9">
+
+    <label>Quarter</label>
+    <input type="number" id="quarter" value="3">
+
+    <label>Lag 1</label>
+    <input type="number" id="lag1" value="85000">
+
+    <label>Lag 2</label>
+    <input type="number" id="lag2" value="83000">
+
+    <label>Lag 3</label>
+    <input type="number" id="lag3" value="81000">
+
+    <label>Rolling Mean (3)</label>
+    <input type="number" id="rollingMean" value="83000">
+
+    <label>Rolling Std (3)</label>
+    <input type="number" id="rollingStd" value="1200">
+
+    <button onclick="predictSales()">Predict Sales</button>
+
+    <div id="result" class="result" style="display:none;"></div>
+</div>
+
+<script>
+    function predictSales() {
+        const payload = {
+            year: Number(document.getElementById("year").value),
+            month: Number(document.getElementById("month").value),
+            quarter: Number(document.getElementById("quarter").value),
+            lag_1: Number(document.getElementById("lag1").value),
+            lag_2: Number(document.getElementById("lag2").value),
+            lag_3: Number(document.getElementById("lag3").value),
+            rolling_mean_3: Number(document.getElementById("rollingMean").value),
+            rolling_std_3: Number(document.getElementById("rollingStd").value)
+        };
+
+        fetch("http://127.0.0.1:5000/forecast", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.style.display = "block";
+            resultDiv.classList.remove("error");
+            resultDiv.innerHTML = `<strong>Predicted Sales:</strong> ₹ ${data.predicted_sales}<br>
+            <strong>Model Used:</strong> ${data.model_used}<br><br><em style="font-size: 13px; color: #555;">
+            Prediction is based on historical trends and may vary.
+            </em> `;
+        })
+        .catch(error => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.style.display = "block";
+            resultDiv.classList.add("error");
+            resultDiv.innerHTML = "Error connecting to API";
+        });
+    }
+</script>
+
+</body>
+</html>
