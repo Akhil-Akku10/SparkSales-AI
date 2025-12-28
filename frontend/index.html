@@ -2,28 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sales Forecasting Dashboard</title>
+    <title>SparkSales AI – Business Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
             background: #f4f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 30px;
         }
 
         .container {
+            max-width: 900px;
+            margin: auto;
             background: white;
             padding: 25px;
-            width: 420px;
             border-radius: 10px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        h2 {
+        h2, h3 {
             text-align: center;
-            margin-bottom: 20px;
             color: #333;
         }
 
@@ -42,7 +41,7 @@
         }
 
         button {
-            margin-top: 20px;
+            margin-top: 15px;
             width: 100%;
             padding: 10px;
             background: #007bff;
@@ -58,13 +57,10 @@
         }
 
         .result {
-            margin-top: 20px;
-            padding: 15px;
-            background: #e9f5ff;
+            margin-top: 15px;
+            padding: 12px;
             border-radius: 5px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
+            background: #e9f5ff;
             color: #004085;
         }
 
@@ -72,79 +68,191 @@
             background: #f8d7da;
             color: #721c24;
         }
+
+        hr {
+            margin: 30px 0;
+        }
+
+        canvas {
+            margin-top: 30px;
+        }
+
+        small {
+            color: #666;
+        }
     </style>
 </head>
+
 <body>
 
 <div class="container">
-    <h2>Sales Forecasting</h2>
+
+    <h2>SparkSales AI</h2>
+    <h3>Manual Sales Prediction</h3>
 
     <label>Year</label>
-    <input type="number" id="year" value="2024">
+    <input type="number" id="year" placeholder="e.g. 2024">
 
     <label>Month</label>
-    <input type="number" id="month" value="9">
+    <input type="number" id="month" placeholder="1–12">
 
     <label>Quarter</label>
-    <input type="number" id="quarter" value="3">
+    <input type="number" id="quarter" placeholder="1–4">
 
-    <label>Lag 1</label>
-    <input type="number" id="lag1" value="85000">
+    <label>Lag 1 (Previous period sales)</label>
+    <input type="number" id="lag1" placeholder="e.g. 85000">
 
     <label>Lag 2</label>
-    <input type="number" id="lag2" value="83000">
+    <input type="number" id="lag2" placeholder="e.g. 83000">
 
     <label>Lag 3</label>
-    <input type="number" id="lag3" value="81000">
+    <input type="number" id="lag3" placeholder="e.g. 81000">
 
     <label>Rolling Mean (3)</label>
-    <input type="number" id="rollingMean" value="83000">
+    <input type="number" id="rollingMean" placeholder="Average of last 3 sales">
 
     <label>Rolling Std (3)</label>
-    <input type="number" id="rollingStd" value="1200">
+    <input type="number" id="rollingStd" placeholder="Sales variability">
+
+    <small>
+        Lag and rolling features help the model understand recent demand patterns.
+    </small>
 
     <button onclick="predictSales()">Predict Sales</button>
 
     <div id="result" class="result" style="display:none;"></div>
+    <hr>
+    <h3>CSV-Based Forecast & Analytics</h3>
+
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="predictFromCSV()">Predict from CSV</button>
+
+    <div id="csvResult" class="result" style="display:none;"></div>
+    <hr>
+    <h3>Sales Trend Analysis (From Uploaded Data)</h3>
+
+    <canvas id="salesTrendChart" height="120"></canvas>
+    <canvas id="growthChart" height="120"></canvas>
+
 </div>
 
 <script>
-    function predictSales() {
-        const payload = {
-            year: Number(document.getElementById("year").value),
-            month: Number(document.getElementById("month").value),
-            quarter: Number(document.getElementById("quarter").value),
-            lag_1: Number(document.getElementById("lag1").value),
-            lag_2: Number(document.getElementById("lag2").value),
-            lag_3: Number(document.getElementById("lag3").value),
-            rolling_mean_3: Number(document.getElementById("rollingMean").value),
-            rolling_std_3: Number(document.getElementById("rollingStd").value)
-        };
-
-        fetch("http://127.0.0.1:5000/forecast", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(data => {
-            const resultDiv = document.getElementById("result");
-            resultDiv.style.display = "block";
-            resultDiv.classList.remove("error");
-            resultDiv.innerHTML = `<strong>Predicted Sales:</strong> ₹ ${data.predicted_sales}<br>
-            <strong>Model Used:</strong> ${data.model_used}<br><br><em style="font-size: 13px; color: #555;">
-            Prediction is based on historical trends and may vary.
-            </em> `;
-        })
-        .catch(error => {
-            const resultDiv = document.getElementById("result");
-            resultDiv.style.display = "block";
-            resultDiv.classList.add("error");
-            resultDiv.innerHTML = "Error connecting to API";
-        });
+let salesChart = null;
+let growthChart = null;
+function predictSales() {
+    const fields = ["year","month","quarter","lag1","lag2","lag3","rollingMean","rollingStd"];
+    for (let id of fields) {
+        if (document.getElementById(id).value === "") {
+            alert("Please fill all fields.");
+            return;
+        }
     }
+
+    const payload = {
+        year: Number(year.value),
+        month: Number(month.value),
+        quarter: Number(quarter.value),
+        lag_1: Number(lag1.value),
+        lag_2: Number(lag2.value),
+        lag_3: Number(lag3.value),
+        rolling_mean_3: Number(rollingMean.value),
+        rolling_std_3: Number(rollingStd.value)
+    };
+
+    fetch("http://127.0.0.1:5000/forecast", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        result.style.display = "block";
+        result.classList.remove("error");
+        result.innerHTML = `
+            <strong>Predicted Sales:</strong> ₹ ${data.predicted_sales}<br>
+            <strong>Model Used:</strong> ${data.model_used}<br><br>
+            <em>Prediction is based on historical trends and may vary.</em>
+        `;
+    })
+    .catch(err => {
+        result.style.display = "block";
+        result.classList.add("error");
+        result.innerHTML = err.message || "Manual forecast unavailable";
+    });
+}
+
+function predictFromCSV() {
+    if (!csvFile.files.length) {
+        alert("Please upload a CSV file");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", csvFile.files[0]);
+
+    fetch("http://127.0.0.1:5000/forecast/csv", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        csvResult.style.display = "block";
+        csvResult.classList.remove("error");
+        csvResult.innerHTML = `
+            <strong>Predicted Sales:</strong> ₹ ${data.predicted_sales}<br>
+            <strong>Expected Revenue:</strong> ₹ ${data.expected_revenue}<br>
+            <strong>Inventory Action:</strong> ${data.inventory_action}<br><br>
+            <em>${data.disclaimer}</em>
+        `;
+
+        if (!data.trend || !data.trend.dates || data.trend.dates.length === 0) {
+            alert("Not enough data for trend analysis");
+            return;
+        }
+
+        if (salesChart) salesChart.destroy();
+        if (growthChart) growthChart.destroy();
+
+        salesChart = new Chart(document.getElementById("salesTrendChart"), {
+            type: "line",
+            data: {
+                labels: data.trend.dates,
+                datasets: [{
+                    label: "Monthly Sales",
+                    data: data.trend.sales,
+                    borderColor: "#007bff",
+                    tension: 0.3,
+                    fill: false
+                }]
+            }
+        });
+
+        growthChart = new Chart(document.getElementById("growthChart"), {
+            type: "bar",
+            data: {
+                labels: data.trend.dates,
+                datasets: [{
+                    label: "Sales Growth (%)",
+                    data: data.trend.growth,
+                    backgroundColor: "#28a745"
+                }]
+            }
+        });
+    })
+    .catch(err => {
+        csvResult.style.display = "block";
+        csvResult.classList.add("error");
+        csvResult.innerHTML = err.message || "Error connecting to API";
+    });
+}
 </script>
 
 </body>
