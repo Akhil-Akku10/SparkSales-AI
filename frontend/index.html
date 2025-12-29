@@ -2,258 +2,402 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SparkSales AI – Business Intelligence Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPARKSALES | AI Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
+        :root {
+            --bg-dark: #121417;
+            --panel-bg: #1e2126;
+            --accent-orange: #ff5f1f;
+            --accent-glow: rgba(255, 95, 31, 0.4);
+            --text-main: #e0e0e0;
+            --text-dim: #8e9297;
+            --border: #2d3138;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            padding: 30px;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 40px 0 20px 0;
+            text-align: center;
+            background: linear-gradient(to bottom, #1e2126, #121417);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-name {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 10px;
+            color: white;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .feature-nav {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 25px;
+        }
+
+        .nav-item {
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            padding: 10px 0;
+            border-bottom: 2px solid transparent;
+            transition: 0.3s;
+        }
+
+        .nav-item.active {
+            color: var(--accent-orange);
+            border-bottom: 2px solid var(--accent-orange);
         }
 
         .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
+            width: 95%;
+            max-width: 1400px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            grid-gap: 20px;
+            padding: 20px 0;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
         }
 
-        h2, h3 {
-            text-align: center;
-            color: #333;
+        h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-orange);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--accent-orange);
+            padding-left: 10px;
         }
 
-        label {
-            font-weight: bold;
-            margin-top: 10px;
-            display: block;
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        label { 
+            font-size: 1rem; 
+            color: var(--text-main); 
+            font-weight: 700;
+            text-transform: uppercase; 
+            display: block; 
+            margin-bottom: 12px; 
+            cursor: help;
+            border-bottom: 1px solid #3d424a;
+            padding-bottom: 5px;
+        }
+        
+        input, select { 
+            background: #2a2e35 !important; 
+            border: 2px solid #3d424a; 
+            color: #ffffff !important; 
+            padding: 18px; 
+            border-radius: 6px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            font-size: 1.1rem;
         }
 
         button {
-            margin-top: 15px;
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
+            background: linear-gradient(90deg, #ff5f1f, #ff8c00);
+            color: white; border: none; padding: 14px; border-radius: 6px;
+            cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; transition: 0.3s;
         }
 
-        button:hover {
-            background: #0056b3;
-        }
+        button:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--accent-glow); }
 
         .result {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 5px;
-            background: #e9f5ff;
-            color: #004085;
+            margin-top: 15px; padding: 15px; border-radius: 8px;
+            background: rgba(255, 95, 31, 0.05); border-left: 4px solid var(--accent-orange);
+            font-size: 0.85rem; line-height: 1.5;
         }
 
-        .error {
-            background: #f8d7da;
-            color: #721c24;
+        .chart-box { height: 260px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; }
+
+        .sidebar-description {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            text-align: justify;
         }
 
-        hr {
-            margin: 30px 0;
+        .status-ring {
+            width: 110px; height: 110px; border: 2px solid var(--border); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; position: relative; margin: 20px auto;
         }
-
-        canvas {
-            margin-top: 30px;
+        .status-ring::after {
+            content: ''; position: absolute; width: 115%; height: 115%;
+            border: 2px dashed var(--accent-orange); border-radius: 50%;
+            animation: rotate 15s linear infinite; opacity: 0.4;
         }
+        @keyframes rotate { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
 
-        small {
-            color: #666;
+        @media (max-width: 1100px) {
+            .container { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-
 <body>
 
+<header>
+    <h1 class="brand-name">SPARKSALES</h1>
+    <div class="feature-nav">
+        <div id="nav-dashboard" class="nav-item active" onclick="toggleView('dashboard')">Analytics Dashboard</div>
+        <div id="nav-manual" class="nav-item" onclick="toggleView('manual')">Manual Prediction</div>
+    </div>
+</header>
+
 <div class="container">
+    <div class="main-content">
+        
+        <div id="dashboardSection">
+            <div class="panel">
+                <h3>Intelligence Data Upload</h3>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <input type="file" id="csvFile" accept=".csv" style="padding: 15px; background: #2a2e35; color: white; border-radius: 8px; font-size: 1rem; flex-grow: 1;">
+                    <button onclick="predictFromCSV()" style="width: 300px; padding: 18px; font-size: 1.1rem;">Process Dataset</button>
+                </div>
+                <div id="csvResult" class="result" style="display:none; font-size: 1.2rem; padding: 25px; border-left-width: 5px;"></div>
+            </div>
 
-    <h2>SparkSales AI</h2>
-    <h3>Manual Sales Prediction</h3>
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Historical Sales Trend</h3>
+                    <div class="chart-box"><canvas id="salesTrendChart"></canvas></div>
+                </div>
+                <div class="panel">
+                    <h3>Monthly Growth Analysis</h3>
+                    <div class="chart-box"><canvas id="growthChart"></canvas></div>
+                </div>
+            </div>
 
-    <label>Year</label>
-    <input type="number" id="year" placeholder="e.g. 2024">
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Risk Assessment</h3>
+                    <div class="chart-box"><canvas id="KpiRiskChart"></canvas></div>
+                </div>
+                <div class="panel">
+                    <h3>Performance Delta</h3>
+                    <div class="chart-box"><canvas id="KpiSalesChart"></canvas></div>
+                </div>
+            </div>
 
-    <label>Month</label>
-    <input type="number" id="month" placeholder="1–12">
+            <div class="panel">
+                <h3>AI Logic & Insights</h3>
+                <div id="insightsBox" class="result" style="border-left-color: #00bcd4; font-size: 1rem;">Upload a dataset to generate predictive insights...</div>
+            </div>
+        </div>
 
-    <label>Quarter</label>
-    <input type="number" id="quarter" placeholder="1–4">
+        <div id="manualSection" style="display: none;">
+            <div class="panel">
+                <h3 style="font-size: 1.2rem; margin-bottom: 30px;">Advanced Manual Forecast</h3>
+                
+                <div class="input-group">
+                    <div><label>Current Year</label><input type="number" id="year" value="2025"></div>
+                    <div>
+                        <label>Target Month</label>
+                        <select id="month">
+                            <option value="1">January</option><option value="2">February</option>
+                            <option value="3">March</option><option value="4">April</option>
+                            <option value="5">May</option><option value="6">June</option>
+                            <option value="7">July</option><option value="8">August</option>
+                            <option value="9">September</option><option value="10">October</option>
+                            <option value="11">November</option><option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
 
-    <label>Lag 1 (Previous period sales)</label>
-    <input type="number" id="lag1" placeholder="e.g. 85000">
+                <div class="input-group">
+                    <div>
+                        <label>Fiscal Quarter</label>
+                        <select id="quarter">
+                            <option value="1">Q1 (Jan - Mar)</option>
+                            <option value="2">Q2 (Apr - Jun)</option>
+                            <option value="3">Q3 (Jul - Sep)</option>
+                            <option value="4">Q4 (Oct - Dec)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Sales in the immediately previous period">Lag 1: Previous Month</label>
+                        <input type="number" id="lag1" placeholder="Enter ₹ amount">
+                    </div>
+                </div>
 
-    <label>Lag 2</label>
-    <input type="number" id="lag2" placeholder="e.g. 83000">
+                <div class="input-group">
+                    <div><label title="Sales two periods ago">Lag 2: Two Months Ago</label><input type="number" id="lag2" placeholder="Enter ₹ amount"></div>
+                    <div><label title="Sales three periods ago">Lag 3: Three Months Ago</label><input type="number" id="lag3" placeholder="Enter ₹ amount"></div>
+                </div>
 
-    <label>Lag 3</label>
-    <input type="number" id="lag3" placeholder="e.g. 81000">
+                <div style="background: rgba(255, 95, 31, 0.05); border: 1px dashed var(--accent-orange); padding: 20px; margin-bottom: 25px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.9rem; color: var(--text-dim); max-width: 60%;">
+                        <strong>Statistical Feature Assistant:</strong> Computes the mean (average) and volatility (standard deviation) automatically from your Lag 1, 2, and 3 inputs.
+                    </div>
+                    <button onclick="calculateRollingStats()" style="background: #2d3138; color: var(--accent-orange); border: 1px solid var(--accent-orange); padding: 15px 30px; font-size: 1rem; border-radius: 6px; width: auto; min-width: 200px;">CALCULATE STATS</button>
+                </div>
 
-    <label>Rolling Mean (3)</label>
-    <input type="number" id="rollingMean" placeholder="Average of last 3 sales">
+                <div class="input-group">
+                    <div><label title="Average of the last 3 sales values">Rolling Mean Average</label><input type="number" id="rollingMean" placeholder="Avg of Lags"></div>
+                    <div><label title="Fluctuation in the sales (Standard Deviation)">Rolling Standard Deviation</label><input type="number" id="rollingStd" placeholder="Volatility index"></div>
+                </div>
 
-    <label>Rolling Std (3)</label>
-    <input type="number" id="rollingStd" placeholder="Sales variability">
+                <button onclick="predictSales()" style="padding: 20px; font-size: 1.1rem;">Run Forecast Engine</button>
+                <div id="result" class="result" style="display:none; font-size: 1.1rem; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
 
-    <small>
-        Lag and rolling features help the model understand recent demand patterns.
-    </small>
+    <div class="panel sidebar">
+        <h3>Model Brief</h3>
+        <div class="status-ring">
+            <div style="text-align: center;">
+                <span style="font-size: 0.6rem; color: var(--text-dim);">ENGINE</span><br>
+                <span style="font-size: 0.9rem; font-weight: bold; color: var(--accent-orange);">GEN-3</span>
+            </div>
+        </div>
+        
+        <div class="sidebar-description">
+            <p><strong>SparkSales Gen-3</strong> is an advanced forecasting engine combining XGBoost and LSTM networks to process non-linear sales signals and seasonal trends.</p>
+        </div>
 
-    <button onclick="predictSales()">Predict Sales</button>
-
-    <div id="result" class="result" style="display:none;"></div>
-    <hr>
-    <h3>CSV-Based Forecast & Analytics</h3>
-
-    <input type="file" id="csvFile" accept=".csv">
-    <button onclick="predictFromCSV()">Predict from CSV</button>
-
-    <div id="csvResult" class="result" style="display:none;"></div>
-    <hr>
-    <h3>Sales Trend Analysis (From Uploaded Data)</h3>
-
-    <canvas id="salesTrendChart" height="120"></canvas>
-    <canvas id="growthChart" height="120"></canvas>
-
+        <div id="kpibox" class="result" style="width: 100%; border: none; background: rgba(0,0,0,0.2); text-align: center; margin-top: 20px;">
+            System Ready
+        </div>
+    </div>
 </div>
 
 <script>
-let salesChart = null;
-let growthChart = null;
-function predictSales() {
-    const fields = ["year","month","quarter","lag1","lag2","lag3","rollingMean","rollingStd"];
-    for (let id of fields) {
-        if (document.getElementById(id).value === "") {
-            alert("Please fill all fields.");
-            return;
+function calculateRollingStats() {
+    const l1 = parseFloat(document.getElementById('lag1').value) || 0;
+    const l2 = parseFloat(document.getElementById('lag2').value) || 0;
+    const l3 = parseFloat(document.getElementById('lag3').value) || 0;
+    const mean = (l1 + l2 + l3) / 3;
+    const variance = (Math.pow(l1 - mean, 2) + Math.pow(l2 - mean, 2) + Math.pow(l3 - mean, 2)) / 3;
+    document.getElementById('rollingMean').value = mean.toFixed(2);
+    document.getElementById('rollingStd').value = Math.sqrt(variance).toFixed(2);
+}
+
+function toggleView(view) {
+    document.getElementById('dashboardSection').style.display = (view === 'dashboard' ? 'block' : 'none');
+    document.getElementById('manualSection').style.display = (view === 'manual' ? 'block' : 'none');
+    document.getElementById('nav-dashboard').classList.toggle('active', view === 'dashboard');
+    document.getElementById('nav-manual').classList.toggle('active', view === 'manual');
+}
+
+let salesChart=null, growthChart=null, kpiSalesChart=null, kpiRiskChart=null;
+Chart.defaults.color = '#8e9297';
+Chart.defaults.borderColor = '#2d3138';
+
+function predictFromCSV() {
+    const csvInput = document.getElementById('csvFile');
+    if (!csvInput.files.length) { alert("Please upload a CSV file"); return; }
+    const formData = new FormData();
+    formData.append("file", csvInput.files[0]);
+
+    fetch("http://127.0.0.1:5000/forecast/csv", { method: "POST", body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+        const resDiv = document.getElementById('csvResult');
+        resDiv.style.display = "block";
+        resDiv.innerHTML = `<strong>Projected Revenue:</strong> ₹ ${data.predicted_sales} | <strong>Inventory:</strong> ${data.inventory_action}`;
+        
+        if (data.insights) {
+            document.getElementById('insightsBox').innerHTML = data.insights.map(i => "• " + i).join("<br>");
         }
-    }
 
+        if (data.kpis) {
+            if (kpiSalesChart) kpiSalesChart.destroy();
+            kpiSalesChart = new Chart(document.getElementById("KpiSalesChart"), {
+                type: 'bar',
+                data: { labels: ['Avg Sales', 'Latest'], datasets: [{ data: [data.kpis.avg_sales, data.kpis.latest_sales], backgroundColor: ['#3d424a', '#ff5f1f'] }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+            if (kpiRiskChart) kpiRiskChart.destroy();
+            const riskValue = data.kpis.volatility_level === "High" ? 80 : 30;
+            kpiRiskChart = new Chart(document.getElementById("KpiRiskChart"), {
+                type: 'doughnut',
+                data: { labels: ['Risk', 'Safe'], datasets: [{ data: [riskValue, 100-riskValue], backgroundColor: ['#ff5f1f', '#2a2e35'], borderWidth: 0 }] },
+                options: { maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } }
+            });
+        }
+
+        if (data.trend) {
+            if (salesChart) salesChart.destroy();
+            salesChart = new Chart(document.getElementById("salesTrendChart"), {
+                type: 'line',
+                data: { labels: data.trend.dates, datasets: [{ label: 'Sales', data: data.trend.sales, borderColor: '#ff5f1f', tension: 0.3, fill: true, backgroundColor: 'rgba(255, 95, 31, 0.1)' }] },
+                options: { maintainAspectRatio: false }
+            });
+            if (growthChart) growthChart.destroy();
+            growthChart = new Chart(document.getElementById("growthChart"), {
+                type: 'bar',
+                data: { labels: data.trend.dates, datasets: [{ label: 'Growth %', data: data.trend.growth, backgroundColor: '#28a745' }] },
+                options: { maintainAspectRatio: false }
+            });
+        }
+    })
+    .catch(err => alert("Error: " + err.message));
+}
+
+function predictSales() {
     const payload = {
-        year: Number(year.value),
-        month: Number(month.value),
-        quarter: Number(quarter.value),
-        lag_1: Number(lag1.value),
-        lag_2: Number(lag2.value),
-        lag_3: Number(lag3.value),
-        rolling_mean_3: Number(rollingMean.value),
-        rolling_std_3: Number(rollingStd.value)
+        year: Number(document.getElementById('year').value), 
+        month: Number(document.getElementById('month').value), 
+        quarter: Number(document.getElementById('quarter').value),
+        lag_1: Number(document.getElementById('lag1').value), 
+        lag_2: Number(document.getElementById('lag2').value), 
+        lag_3: Number(document.getElementById('lag3').value),
+        rolling_mean_3: Number(document.getElementById('rollingMean').value), 
+        rolling_std_3: Number(document.getElementById('rollingStd').value)
     };
-
     fetch("http://127.0.0.1:5000/forecast", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
+        method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        result.style.display = "block";
-        result.classList.remove("error");
-        result.innerHTML = `
-            <strong>Predicted Sales:</strong> ₹ ${data.predicted_sales}<br>
-            <strong>Model Used:</strong> ${data.model_used}<br><br>
-            <em>Prediction is based on historical trends and may vary.</em>
-        `;
+        const res = document.getElementById('result');
+        res.style.display = "block";
+        res.innerHTML = `<strong>Forecast Output:</strong> ₹ ${data.predicted_sales}`;
     })
-    .catch(err => {
-        result.style.display = "block";
-        result.classList.add("error");
-        result.innerHTML = err.message || "Manual forecast unavailable";
-    });
-}
-
-function predictFromCSV() {
-    if (!csvFile.files.length) {
-        alert("Please upload a CSV file");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", csvFile.files[0]);
-
-    fetch("http://127.0.0.1:5000/forecast/csv", {
-        method: "POST",
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        if (data.error) {
-            throw new Error(data.error);
-        }
-
-        csvResult.style.display = "block";
-        csvResult.classList.remove("error");
-        csvResult.innerHTML = `
-            <strong>Predicted Sales:</strong> ₹ ${data.predicted_sales}<br>
-            <strong>Expected Revenue:</strong> ₹ ${data.expected_revenue}<br>
-            <strong>Inventory Action:</strong> ${data.inventory_action}<br><br>
-            <em>${data.disclaimer}</em>
-        `;
-
-        if (!data.trend || !data.trend.dates || data.trend.dates.length === 0) {
-            alert("Not enough data for trend analysis");
-            return;
-        }
-
-        if (salesChart) salesChart.destroy();
-        if (growthChart) growthChart.destroy();
-
-        salesChart = new Chart(document.getElementById("salesTrendChart"), {
-            type: "line",
-            data: {
-                labels: data.trend.dates,
-                datasets: [{
-                    label: "Monthly Sales",
-                    data: data.trend.sales,
-                    borderColor: "#007bff",
-                    tension: 0.3,
-                    fill: false
-                }]
-            }
-        });
-
-        growthChart = new Chart(document.getElementById("growthChart"), {
-            type: "bar",
-            data: {
-                labels: data.trend.dates,
-                datasets: [{
-                    label: "Sales Growth (%)",
-                    data: data.trend.growth,
-                    backgroundColor: "#28a745"
-                }]
-            }
-        });
-    })
-    .catch(err => {
-        csvResult.style.display = "block";
-        csvResult.classList.add("error");
-        csvResult.innerHTML = err.message || "Error connecting to API";
-    });
+    .catch(err => alert("Server Error."));
 }
 </script>
-
 </body>
 </html>
