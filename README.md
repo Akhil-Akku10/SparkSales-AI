@@ -85,7 +85,7 @@ The application operates through multiple analytical workflows:
 Each workflow is exposed through a unified dashboard and supported by a modular backend architecture.
 
 How to run 
-
+since the models.pkl files can't be uploaded due to size first run the notebooks and save the model to a folder named models in backend after that
 pip install -r requirements.txt
 Backend-python -m backend.app
 Frontend-Open frontend/index.html in a browser.
