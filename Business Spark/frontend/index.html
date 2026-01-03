@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPARKSALES | AI Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #121417;
+            --panel-bg: #1e2126;
+            --accent-orange: #ff5f1f;
+            --accent-glow: rgba(255, 95, 31, 0.4);
+            --text-main: #e0e0e0;
+            --text-dim: #8e9297;
+            --border: #2d3138;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #processing-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 20, 23, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 95, 31, 0.1);
+            border-top: 4px solid var(--accent-orange);
+            border-radius: 50%;
+            animation: spin-loader 1s linear infinite;
+        }
+
+        .loader-text {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            color: var(--accent-orange);
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin-loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse-text { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        header {
+            width: 100%;
+            padding: 40px 0 20px 0;
+            text-align: center;
+            background: linear-gradient(to bottom, #1e2126, #121417);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-name {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 10px;
+            color: white;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .feature-nav {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 25px;
+        }
+
+        .nav-item {
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            padding: 10px 0;
+            border-bottom: 2px solid transparent;
+            transition: 0.3s;
+        }
+
+        .nav-item.active {
+            color: var(--accent-orange);
+            border-bottom: 2px solid var(--accent-orange);
+        }
+
+        .container {
+            width: 98%;
+            max-width: 1600px;
+            padding: 20px 0;
+            display: block; 
+        }
+
+        .main-content {
+            width: 100%;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-orange);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--accent-orange);
+            padding-left: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        label { 
+            font-size: 1rem; 
+            color: var(--text-main); 
+            font-weight: 700;
+            text-transform: uppercase; 
+            display: block; 
+            margin-bottom: 12px; 
+            cursor: help;
+            border-bottom: 1px solid #3d424a;
+            padding-bottom: 5px;
+        }
+        
+        input, select { 
+            background: #2a2e35 !important; 
+            border: 2px solid #3d424a; 
+            color: #ffffff !important; 
+            padding: 18px; 
+            border-radius: 6px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            font-size: 1.1rem;
+        }
+
+        button {
+            background: linear-gradient(90deg, #ff5f1f, #ff8c00);
+            color: white; border: none; padding: 14px; border-radius: 6px;
+            cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; transition: 0.3s;
+        }
+
+        button:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--accent-glow); }
+
+        .btn-secondary {
+            background: #2d3138;
+            border: 1px solid var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .result {
+            margin-top: 15px; padding: 15px; border-radius: 8px;
+            background: rgba(255, 95, 31, 0.05); border-left: 4px solid var(--accent-orange);
+            font-size: 0.85rem; line-height: 1.5;
+        }
+
+        .chart-box { height: 320px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="processing-overlay">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Analyzing Signals...</div>
+</div>
+
+<header>
+    <h1 class="brand-name">SPARKSALES</h1>
+    <div class="feature-nav">
+        <div id="nav-dashboard" class="nav-item active" onclick="toggleView('dashboard')">Analytics Dashboard</div>
+        <div id="nav-manual" class="nav-item" onclick="toggleView('manual')">Manual Prediction</div>
+        <div id="nav-live" class="nav-item" onclick="toggleView('live')">Live Forecasting</div>
+        <div id="nav-product" class="nav-item" onclick="toggleView('product')">Product Wise</div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="main-content">
+        
+        <div id="dashboardSection">
+            <div class="panel">
+                <h3>Intelligence Data Upload</h3>
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <input type="file" id="csvFile" accept=".csv" onchange="captureFile(this)" style="padding: 15px; background: #2a2e35; color: white; border-radius: 8px; font-size: 1rem; flex-grow: 1; min-width: 300px;">
+                    <button onclick="predictFromCSV()" style="width: 220px; padding: 18px; font-size: 1rem;">Process Dataset</button>
+                    <button id="downloadBtn" onclick="downloadPDF()" class="btn-secondary" style="width: 220px; padding: 18px; font-size: 1rem; display: none;">Download Report</button>
+                </div>
+                <div id="csvResult" class="result" style="display:none; font-size: 1.2rem; padding: 25px; border-left-width: 5px;"></div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Historical Sales Trend</h3>
+                    <div class="chart-box"><canvas id="salesTrendChart"></canvas></div>
+                </div>
+                <div class="panel">
+                    <h3>Monthly Growth Analysis</h3>
+                    <div class="chart-box" id="growthContainer"><canvas id="growthChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Sales Trend vs Rolling Average</h3>
+                    <div class="chart-box">
+                        <canvas id="rollingAvgChart"></canvas>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3>Performance Delta</h3>
+                    <div class="chart-box"><canvas id="KpiSalesChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>AI Logic & Insights</h3>
+                <div id="insightsBox" class="result" style="border-left-color: #00bcd4; font-size: 1rem;">Upload a dataset to generate predictive insights...</div>
+            </div>
+        </div>
+
+        <div id="productSection" style="display: none;">
+            <div class="panel">
+                <h3>Product-Wise Intelligence</h3>
+                <div class="input-group">
+                    <div>
+                        <label>Region</label>
+                        <select id="region">
+                            <option value="">All Regions</option>
+                            <option value="West">West</option>
+                            <option value="East">East</option>
+                            <option value="Central">Central</option>
+                            <option value="South">South</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Category</label>
+                        <select id="category">
+                            <option value="">All Categories</option>
+                            <option value="Furniture">Furniture</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                            <option value="Technology">Technology</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div style="grid-column: span 2;">
+                        <label>Sub-Category</label>
+                        <select id="sub_category">
+                            <option value="">All Sub-Categories</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Appliances">Appliances</option>
+                            <option value="Art">Art</option>
+                            <option value="Binders">Binders</option>
+                            <option value="Bookcases">Bookcases</option>
+                            <option value="Chairs">Chairs</option>
+                            <option value="Copiers">Copiers</option>
+                            <option value="Envelopes">Envelopes</option>
+                            <option value="Fasteners">Fasteners</option>
+                            <option value="Furnishings">Furnishings</option>
+                            <option value="Labels">Labels</option>
+                            <option value="Machines">Machines</option>
+                            <option value="Paper">Paper</option>
+                            <option value="Phones">Phones</option>
+                            <option value="Storage">Storage</option>
+                            <option value="Supplies">Supplies</option>
+                            <option value="Tables">Tables</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="predictProductWise()">Run Segmented Analysis</button>
+                <div id="productResult" class="result" style="display:none;"></div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Segmented Trend</h3>
+                    <div class="chart-box"><canvas id="productTrendChart"></canvas></div>
+                </div>
+                <div class="panel">
+                    <h3>Future Projection (3M)</h3>
+                    <div id="productForecastBox" class="result" style="height: 280px; overflow-y: auto;">
+                        Analyze a segment to see future predictions...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="manualSection" style="display: none;">
+            <div class="panel">
+                <h3 style="font-size: 1.2rem; margin-bottom: 30px;">Advanced Manual Forecast</h3>
+                
+                <div class="input-group">
+                    <div><label>Current Year</label><input type="number" id="year" value="2025"></div>
+                    <div>
+                        <label>Target Month</label>
+                        <select id="month">
+                            <option value="1">January</option><option value="2">February</option>
+                            <option value="3">March</option><option value="4">April</option>
+                            <option value="5">May</option><option value="6">June</option>
+                            <option value="7">July</option><option value="8">August</option>
+                            <option value="9">September</option><option value="10">October</option>
+                            <option value="11">November</option><option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div>
+                        <label>Fiscal Quarter</label>
+                        <select id="quarter">
+                            <option value="1">Q1 (Jan - Mar)</option>
+                            <option value="2">Q2 (Apr - Jun)</option>
+                            <option value="3">Q3 (Jul - Sep)</option>
+                            <option value="4">Q4 (Oct - Dec)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Units sold in the immediately previous period">Lag 1: Previous Month Quantity</label>
+                        <input type="number" id="lag1" placeholder="Enter quantity">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div><label title="Units sold two periods ago">Lag 2: Two Months Ago Quantity</label><input type="number" id="lag2" placeholder="Enter quantity"></div>
+                    <div><label title="Units sold three periods ago">Lag 3: Three Months Ago Quantity</label><input type="number" id="lag3" placeholder="Enter quantity"></div>
+                </div>
+
+                <div class="input-group">
+                    <div><label title="Average of the last 3 quantity values">Rolling Mean Quantity</label><input type="number" id="rollingMean" placeholder="Auto-calculated" disabled></div>
+                    <div><label title="Fluctuation in quantity (Standard Deviation)">Rolling Standard Deviation</label><input type="number" id="rollingStd" placeholder="Auto-calculated" disabled></div>
+                </div>
+
+                <button onclick="predictSales()" style="padding: 20px; font-size: 1.1rem;">Run Forecast Engine</button>
+                <div id="result" class="result" style="display:none; font-size: 1.1rem; text-align: center;"></div>
+            </div>
+        </div>
+
+        <div id="liveSection" style="display:none;">
+            <div class="panel">
+                <h3>Live Forecasting (SARIMA Engine)</h3>
+                
+                <p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 20px;">
+                    Real-time time-series projection using trained SARIMA parameters on historical volume signals.
+                </p>
+
+                <div class="input-group" style="grid-template-columns: 1fr;">
+                    <div>
+                        <label>Forecast Horizon (Steps)</label>
+                        <input type="number" id="forecastSteps" value="7">
+                    </div>
+                </div>
+
+                <button onclick="runLiveForecast()" style="padding: 18px; font-size: 1rem;">Execute SARIMA Forecast</button>
+
+                <div id="liveResult" class="result" style="display:none; margin-top: 20px;"></div>
+
+                <div class="panel" style="margin-top: 25px; background: rgba(0,0,0,0.2); border-color: rgba(255, 95, 31, 0.2);">
+                    <h3>Projected SARIMA Trend</h3>
+                    <div class="chart-box">
+                        <canvas id="liveForecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+let globalUploadedFile = null;
+let sarimaInterval = null; 
+let liveChart = null; 
+let rollingAvgChart = null;
+let liveHistory = {
+    labels: [],
+    values: []
+};
+
+let lastCSVResponse = null;
+let productTrendChart = null;
+let salesChart=null, growthChart=null, kpiSalesChart=null;
+
+Chart.defaults.color = '#8e9297';
+Chart.defaults.borderColor = '#2d3138';
+
+const setLoader = (state) => {
+    document.getElementById('processing-overlay').style.display = state ? 'flex' : 'none';
+};
+
+function computeRollingAverage(data, window = 7) {
+    return data.map((_, i) => {
+        const start = Math.max(0, i - window + 1);
+        const slice = data.slice(start, i + 1);
+        return slice.reduce((a, b) => a + b, 0) / slice.length;
+    });
+}
+
+function captureFile(input) {
+    if (input.files && input.files[0]) {
+        globalUploadedFile = input.files[0];
+    }
+}
+
+function toggleView(view) {
+    document.getElementById('dashboardSection').style.display = (view === 'dashboard' ? 'block' : 'none');
+    document.getElementById('manualSection').style.display = (view === 'manual' ? 'block' : 'none');
+    document.getElementById('liveSection').style.display = (view === 'live' ? 'block' : 'none');
+    document.getElementById('productSection').style.display = (view === 'product' ? 'block' : 'none');
+
+    document.getElementById('nav-dashboard').classList.toggle('active', view === 'dashboard');
+    document.getElementById('nav-manual').classList.toggle('active', view === 'manual');
+    document.getElementById('nav-live').classList.toggle('active', view === 'live');
+    document.getElementById('nav-product').classList.toggle('active', view === 'product');
+
+    if (view !== 'live' && sarimaInterval) {
+        clearInterval(sarimaInterval);
+        sarimaInterval = null;
+    }
+
+    if (view === 'live') {
+        setTimeout(() => {
+            if (liveChart) {
+                liveChart.resize();
+            }
+        }, 200);
+    }
+}
+
+/* product */
+function predictProductWise() {
+    if (!globalUploadedFile) {
+        alert("Please upload a CSV file in the 'Analytics Dashboard' first.");
+        toggleView('dashboard');
+        return;
+    }
+
+    setLoader(true);
+    const formData = new FormData();
+    formData.append("file", globalUploadedFile);
+    formData.append("region", document.getElementById('region').value);
+    formData.append("category", document.getElementById('category').value);
+    formData.append("sub_category", document.getElementById('sub_category').value);
+
+    fetch("http://127.0.0.1:5000/forecast/segmented", { method: "POST", body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+
+        const resDiv = document.getElementById('productResult');
+        resDiv.style.display = "block";
+        
+        if (data.kpis) {
+            resDiv.innerHTML = `<strong>Latest Sales:</strong> ${data.kpis.latest_sales || 0} Units | <strong>Growth:</strong> ${data.kpis.sales_growth_pct || 0}% | <strong>Volatility:</strong> ${data.kpis.volatility_level || 'N/A'}`;
+        } else {
+            resDiv.innerHTML = `<strong>Analysis Complete:</strong> No segmented KPI data available.`;
+        }
+
+        const forecastBox = document.getElementById('productForecastBox');
+        if (data.forecast_quantity) {
+            forecastBox.innerHTML = `<h4>Future Projections</h4>` + 
+                data.forecast_quantity.map((q, i) => `Month ${i+1}: <strong>${q} Units</strong>`).join("<br>");
+        }
+
+        if (data.trend && data.trend.dates) {
+            if (productTrendChart) productTrendChart.destroy();
+            productTrendChart = new Chart(document.getElementById("productTrendChart"), {
+                type: 'line',
+                data: {
+                    labels: data.trend.dates,
+                    datasets: [{
+                        label: 'Segment Sales',
+                        data: data.trend.sales,
+                        borderColor: '#00bcd4',
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(0, 188, 212, 0.1)'
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }
+    })
+    .catch(err => alert("Error: " + err.message))
+    .finally(() => setLoader(false));
+}
+
+/* manual */
+["lag1", "lag2", "lag3"].forEach(id => {
+    document.getElementById(id).addEventListener("input", calculateRollingStats);
+});
+
+function calculateRollingStats() {
+    const l1 = parseFloat(document.getElementById('lag1').value);
+    const l2 = parseFloat(document.getElementById('lag2').value);
+    const l3 = parseFloat(document.getElementById('lag3').value);
+
+    if (isNaN(l1) || isNaN(l2) || isNaN(l3)) {
+        document.getElementById('rollingMean').value = "";
+        document.getElementById('rollingStd').value = "";
+        return;
+    }
+
+    const mean = (l1 + l2 + l3) / 3;
+    const variance = (Math.pow(l1 - mean, 2) + Math.pow(l2 - mean, 2) + Math.pow(l3 - mean, 2)) / 3;
+    
+    document.getElementById('rollingMean').value = mean.toFixed(2);
+    document.getElementById('rollingStd').value = Math.sqrt(variance).toFixed(2);
+}
+
+/*sarima*/
+function runLiveForecast() {
+    if (!globalUploadedFile) {
+        alert("Please upload CSV in Analytics Dashboard first.");
+        toggleView('dashboard');
+        return;
+    }
+
+    if (sarimaInterval) clearInterval(sarimaInterval);
+    executeSarima();
+    sarimaInterval = setInterval(executeSarima, 10000);
+}
+
+function executeSarima() {
+    const steps = document.getElementById("forecastSteps").value || 7;
+    const formData = new FormData();
+    formData.append("file", globalUploadedFile);
+
+    fetch(`http://127.0.0.1:5000/forecast/sarima?steps=${steps}`, {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+
+        const newLabel = data.future_dates[0];
+        const newValue = data.forecast[0];
+
+        if (liveHistory.labels.length === 0) {
+            liveHistory.labels = data.future_dates.slice(0, 7);
+            liveHistory.values = data.forecast.slice(0, 7);
+        } else {
+            liveHistory.labels.push(newLabel);
+            liveHistory.values.push(newValue);
+            if (liveHistory.labels.length > 20) {
+                liveHistory.labels.shift();
+                liveHistory.values.shift();
+            }
+        }
+
+        updateLiveChart(liveHistory.labels, liveHistory.values);
+        updateLiveInsight(data);
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById("liveResult").innerHTML = "Live SARIMA update failed.";
+    });
+}
+
+function updateLiveChart(labels, values) {
+    if (!liveChart) {
+        const ctx = document.getElementById("liveForecastChart").getContext("2d");
+        liveChart = new Chart(ctx,
+            {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Live SARIMA Forecast",
+                        data: values,
+                        borderColor: "#ff5f1f",
+                        backgroundColor: "rgba(255,95,31,0.15)",
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: "rgba(255,255,255,0.05)" } }
+                    }
+                }
+            }
+        );
+    } else {
+        liveChart.data.labels = labels;
+        liveChart.data.datasets[0].data = values;
+        liveChart.update();
+    }
+    
+    setTimeout(() => liveChart.resize(), 100);
+}
+
+function updateLiveInsight(data) {
+    const box = document.getElementById("liveResult");
+    box.style.display = "block";
+
+    let stepsHTML = "";
+    if (data.steps_breakdown) {
+        stepsHTML = data.steps_breakdown
+            .map(s => `• ${s}`)
+            .join("<br>");
+    }
+
+    box.innerHTML = `
+        <strong>Live SARIMA Forecast</strong><br><br>
+        ${stepsHTML}<br><br>
+        <strong>${data.insight}</strong><br>
+        <small>Updated at ${new Date().toLocaleTimeString()}</small>
+    `;
+}
+/* csv*/
+function predictFromCSV() {
+    const csvInput = document.getElementById('csvFile');
+    if (!csvInput.files.length) { alert("Please upload a CSV file"); return; }
+    
+    setLoader(true);
+    const formData = new FormData();
+    formData.append("file", csvInput.files[0]);
+
+    fetch("http://127.0.0.1:5000/forecast/csv", { method: "POST", body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+        lastCSVResponse = data;
+        document.getElementById('downloadBtn').style.display = 'block';
+        const resDiv = document.getElementById('csvResult');
+        resDiv.style.display = "block";
+        
+        const inventoryInsight = data.insights?.find(i => i.toLowerCase().includes("inventory")) || "Maintain inventory";
+        resDiv.innerHTML = `<strong>Projected Units:</strong> ${data.predicted_sales} | <strong>Inventory:</strong> ${inventoryInsight}`;
+        
+        if (data.insights) {
+            document.getElementById('insightsBox').innerHTML = data.insights.map(i => "• " + i).join("<br>");
+        }
+
+        if (data.kpis) {
+            if (kpiSalesChart) kpiSalesChart.destroy();
+            kpiSalesChart = new Chart(document.getElementById("KpiSalesChart"), {
+                type: 'bar',
+                data: { labels: ['Avg Units', 'Latest'], datasets: [{ data: [data.kpis.avg_sales, data.kpis.latest_sales], backgroundColor: ['#3d424a', '#ff5f1f'] }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        if (data.trend) {
+            if (salesChart) salesChart.destroy();
+            salesChart = new Chart(document.getElementById("salesTrendChart"), {
+                type: 'line',
+                data: { labels: data.trend.dates, datasets: [{ label: 'Units Sold', data: data.trend.sales, borderColor: '#ff5f1f', tension: 0.3, fill: true, backgroundColor: 'rgba(255, 95, 31, 0.1)' }] },
+                options: { maintainAspectRatio: false }
+            });
+
+            const rollingAvg = computeRollingAverage(data.trend.sales, 7);
+
+            if (rollingAvgChart) rollingAvgChart.destroy();
+            rollingAvgChart = new Chart(
+                document.getElementById("rollingAvgChart"),
+                {
+                    type: "line",
+                    data: {
+                        labels: data.trend.dates,
+                        datasets: [
+                            {
+                                label: "Actual Sales",
+                                data: data.trend.sales,
+                                borderColor: "#ff5f1f",
+                                tension: 0.3,
+                                fill: false
+                            },
+                            {
+                                label: "7-Day Rolling Average",
+                                data: rollingAvg,
+                                borderColor: "#00bcd4",
+                                borderDash: [6, 6],
+                                tension: 0.3,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { color: "rgba(255,255,255,0.05)" } }
+                        }
+                    }
+                }
+            );
+
+            const hasRealGrowth = data.trend.growth && data.trend.growth.some(g => g !== 0);
+            const growthContainer = document.getElementById("growthContainer");
+
+            if (!hasRealGrowth) {
+                growthContainer.innerHTML = "<div style='color:#8e9297;text-align:center;padding-top:100px; font-size: 0.9rem;'>Insufficient variation for monthly growth analysis</div>";
+            } else {
+                growthContainer.innerHTML = '<canvas id="growthChart"></canvas>';
+                if (growthChart) growthChart.destroy();
+                growthChart = new Chart(document.getElementById("growthChart"), {
+                    type: 'bar',
+                    data: { labels: data.trend.dates, datasets: [{ label: 'Growth %', data: data.trend.growth, backgroundColor: '#28a745' }] },
+                    options: { maintainAspectRatio: false }
+                });
+            }
+        }
+    })
+    .catch(err => alert("Error: " + err.message))
+    .finally(() => setLoader(false));
+}
+
+function predictSales() {
+    setLoader(true);
+    const payload = {
+        lag_1: Number(document.getElementById("lag1").value),
+        lag_2: Number(document.getElementById("lag2").value),
+        lag_3: Number(document.getElementById("lag3").value),
+        rolling_mean_3: Number(document.getElementById("rollingMean").value),
+        rolling_std_3: Number(document.getElementById("rollingStd").value),
+        year: Number(document.getElementById("year").value),
+        month: Number(document.getElementById("month").value),
+        quarter: Number(document.getElementById("quarter").value)
+    };
+    fetch("http://127.0.0.1:5000/predict/manual", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        const res = document.getElementById('result');
+        res.style.display = "block";
+        res.innerHTML = `<strong>Forecast Output:</strong> ${data.predicted_sales} Units`;
+    })
+    .catch(err => alert("Server Error."))
+    .finally(() => setLoader(false));
+}
+
+function downloadPDF() {
+    if (!lastCSVResponse) return;
+    setLoader(true);
+    fetch("http://127.0.0.1:5000/download-report", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(lastCSVResponse)
+    })
+    .then(res => res.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "SparkSales_Report.pdf";
+        a.click();
+    })
+    .finally(() => setLoader(false));
+}
+</script>
+</body>
+</html>
