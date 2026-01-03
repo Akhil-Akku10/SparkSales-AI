@@ -197,9 +197,9 @@ Manual Prediction:
 6. Fiscal Quarter: 4 quarters ((Jan-Mar),(Apr-Jun),(Jul-Sept),(Oct-Dec))
 7. Rolling Mean: Average of the lags
 8. Rolling Standard Deviation: Fluctuation in quantity
-   Rules for inputs:
-  1. While entering the lag values please provide the real sales value. The model is trained with large sales value so the input values should also be higher.
-  2. The Rolling mean and Rolling standard deviation is automatically calculated no need to manually provide the mean and deviation.
+Rules for inputs:
+1. While entering the lag values please provide the real sales value. The model is trained with large sales value so the input values should also be higher.
+2. The Rolling mean and Rolling standard deviation is automatically calculated no need to manually provide the mean and deviation.
 
 Live SARIMA Forecasting Section:
 1. CSV file: The same file from the dataset is taken here.
