@@ -14,9 +14,9 @@ Business_Spark/
 │   ├── __init__.py                 # Backend package initializer
 │   │
 │   ├── models/
-│   │   ├── FeatureCols.pkl         # Feature schema used by ML models
-│   │   ├── SalesForecast.pkl       # Trained ML regression model
-│   │   └── SarimaModel.pkl         # Trained SARIMA time-series model
+│   │   ├── feature_cols.pkl         # Feature schema used by ML models
+│   │   ├── sales_forecast.pkl       # Trained ML regression model
+│   │   └── sarima_model.pkl         # Trained SARIMA time-series model
 │   │
 │   ├── reports/
 │   │   ├── charts/
@@ -36,7 +36,7 @@ Business_Spark/
 │       ├── sarima.py               # SARIMA model logic & helpers
 │       ├── sales_trend.py          # Sales trends, rolling stats, growth
 │       ├── pdfgen.py               # PDF report generation
-│       ├── manuel_forecast.py      # Manual prediction logic
+│       ├── manual_forecast.py      # Manual prediction logic
 │       ├── kpi_dashboard.py        # KPI calculations
 │       ├── featureeng.py           # Feature engineering utilities
 │       ├── csv_loader.py           # CSV ingestion and validation
@@ -83,6 +83,12 @@ The application operates through multiple analytical workflows:
 4. Product and region-wise segmented analysis
 5. Automated report generation
 Each workflow is exposed through a unified dashboard and supported by a modular backend architecture.
+
+How to run 
+
+pip install -r requirements.txt
+Backend-python -m backend.app
+Frontend-Open frontend/index.html in a browser.
 
 SARIMA Live Forecasting Dashboard Workflow
 
