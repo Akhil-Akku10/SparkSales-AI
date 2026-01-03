@@ -42,7 +42,7 @@ Business_Spark/
 │       ├── csv_loader.py           # CSV ingestion and validation
 │       ├── csv_formatting.py       # CSV preprocessing & cleaning
 │       ├── __init__.py
-│       └── __pycache__/
+│       
 │
 ├── data/
 │   │
@@ -93,7 +93,6 @@ Frontend-Open frontend/index.html in a browser.
 SARIMA Live Forecasting Dashboard Workflow
 
 The SARIMA dashboard provides continuous time-series forecasting based on historical sales patterns.
-
 Workflow Steps
 
 1. Dataset Upload
@@ -121,7 +120,6 @@ This workflow enables near real-time demand forecasting using classical time-ser
 Product and Region-wise Segmented Forecasting Workflow
 
 The segmented forecasting module allows users to analyze sales performance across regions, categories, and sub-categories.
-
 Workflow Steps
 
 1. Dataset Upload
@@ -151,7 +149,6 @@ This workflow helps identify high-performing and underperforming products or reg
 Manual Forecasting Workflow
 
 The manual forecasting module allows users to input recent sales values directly.
-
 Workflow Steps
 
 1. User enters lag-based values (previous months).
@@ -175,23 +172,79 @@ Backend: Flask (Python)
 Machine Learning: Random Forest Regression
 
 Time-Series Forecasting: SARIMA
-
 Data Processing: Pandas, NumPy
-
 Reporting: Automated PDF generation
 
 Key Highlights
 
-Modular service-based backend architecture
+1. Modular service-based backend architecture
+2. Live SARIMA forecasting with continuous updates
+3. Product and region-wise analytical intelligence
+4. Automatic feature engineering and validation
+5. End-to-end pipeline from data upload to report generation
 
-Live SARIMA forecasting with continuous updates
+Inputs
 
-Product and region-wise analytical intelligence
+Analytical Dashboard:
+1. CSV file upload: A structural historical sales dataset it should strictly contain the dates, region,category,subcategory,sales
+   
+Manual Prediction:
+1. Lag 1: Previous month sales
+2. Lag 2: Sales from two months ago
+3. Lag 3: Sales from three months ago
+4. Year
+5. Month
+6. Fiscal Quarter: 4 quarters ((Jan-Mar),(Apr-Jun),(Jul-Sept),(Oct-Dec))
+7. Rolling Mean: Average of the lags
+8. Rolling Standard Deviation: Fluctuation in quantity
+   Rules for inputs:
+  1. While entering the lag values please provide the real sales value. The model is trained with large sales value so the input values should also be higher.
+  2. The Rolling mean and Rolling standard deviation is automatically calculated no need to manually provide the mean and deviation.
 
-Automatic feature engineering and validation
+Live SARIMA Forecasting Section:
+1. CSV file: The same file from the dataset is taken here.
 
-End-to-end pipeline from data upload to report generation
+Product Wise Forecasting:
+1. CSV file: File taken from the dashboard.
+2. Region: The region section
+3. Category: Category of the product
+4. Subcategory: Subcategories of the products
 
+Outputs
+
+Analytical Dashboard:
+1. Projected units:This represents the estimated number of units expected to be sold in the upcoming period. This is derived from a trained machine learning regression model. This uses historical sales trend and the outputs reflect the pattern. This is helpful in estimating the upcoming demands and can be used as a basis for the inventory management
+2.Inventory Recommendation: This is predicted based on this units which is predicted from the analysis of data
+3. Historical Sales Trend: This is a line chart that shows actual sales quantities over time. This is plotted by using insights from the uploaded dataset.
+4. Monthly Growth Analysis: This barchart will provide month to month percentage growth in sales.
+   Growth=(Current-previous)/previous *100
+5. Sales Trend vs Rolling Average: A comparison chart between actual sales and the rolling average. In which rolling average is calculated over a fixed window which contains a smoothed representation of sales over time.
+6. Performance Delta: A KPI visualization that compares average sales against the most recent sales values where
+   Average sales=mean of historical data
+   Latest sales=most recent recorded value
+7. AI Insights Section: Automatically generated textual insights summarizing the key obeservations which is computed based on trend direction growth rate and volatality. Rule based interpretation over analytical outputs are used here.
+8. Download report button allows users to generate and download a comprehensive business intelligence report in PDF format based on currently uploaded dataset and computed analytics.
+   
+Manual Prediction:
+The manual prediction module allows the users to generate future sales forecast by directly entering recent historical values instead of a dataset.
+1. Forecast Output: The value represents the predicted sales quantity for the selected future period, calculated using a trained machine learning regression model and prediction is done using Random forest regression model. This can be used for sceneario testing, quick forecasting and business planning.
+
+SARIMA Model:
+The SARIMA(Seasonal AutoRegressive Integrated Moving Average)module provides time-series based future sales forecasts using only historical sales patterns.
+1. Forecasted Values: The value represent rthe predicted sales quantities for future time periods generated by the SARIMA model. Each value corresponds to a future step.
+2. Forecast Horizon: The number of future time periods for which predictions are generated. It is defined by the user and each step represents one future time interval.
+3. Live Updating Trend: New forecast values are generated at fixed time intervals and chart updates dynamically without reloading the page. The older values are removed to maintain a rolling visualization window.
+4. Trend Insights: Along with numerical predictions, the system generated trend-based insights.
+5. Visualization Output: A line chart showing future sales projections
+
+Product-Wise Forecasting:
+The product-wise forecasting module enables targeted analysis of sales performance across different regions, categories and sub-categories. This allow decision makers to understand how specific segments behave instead of relying on overall aggregated trends.
+1. Segmented Sales Trend: A line chart which represents historical sales for the selected product segment. This helps in identifying demand behavior, highlighting growth and performance comparison.
+2. Key Performance Indicators: For selected segment the system computes
+   Latest sales- most recent sales value.
+   Sales growth- change compared to the previous period.
+   Volatility level- demand stability classification
+3. Future Projection(forecast output): provides short term predicted sales quantities for the selected product segment.
 
 
 <img width="1920" height="1080" alt="Screenshot 2026-01-03 143421" src="https://github.com/user-attachments/assets/b16e8f41-e9a5-422f-8897-b930666bcf73" />
