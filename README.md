@@ -6,6 +6,7 @@ Business Spark is an AI-powered sales intelligence platform designed to analyze 
 
 System Workflow Overview
 
+```
 Business_Spark/
 │
 ├── backend/
@@ -74,6 +75,7 @@ Business_Spark/
 │   └── test_forecast.py            # Forecast service tests
 │
 └── README.md                       # Project documentation
+```
 
 The application operates through multiple analytical workflows:
 
